@@ -1,4 +1,4 @@
-import { ArrowRight, Download, Mail } from 'lucide-react'
+import { ArrowRight, Download, LayoutDashboard, Mail } from 'lucide-react'
 import { useCommand } from '@/components/CommandPalette'
 import { GitHubIcon } from '@/components/icons'
 import { buttonClass } from '@/components/ui/button'
@@ -42,6 +42,10 @@ export function Hero() {
             <a href={site.resumePath} className={buttonClass({ variant: 'ghost', size: 'lg' })}>
               <Download className="size-4" />
               Download Resume
+            </a>
+            <a href="#/dashboard" className={buttonClass({ variant: 'default', size: 'lg' })}>
+              <LayoutDashboard className="size-4" />
+              Dashboard
             </a>
           </div>
           <ul className="reveal reveal-delay-3 mt-8 flex flex-wrap gap-2" aria-label="Primary stack">

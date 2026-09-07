@@ -1,4 +1,4 @@
-import { Menu, Moon, Sun, X } from 'lucide-react'
+import { LayoutDashboard, Menu, Moon, Sun, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useCommand } from '@/components/CommandPalette'
 import { GitHubIcon, LinkedInIcon } from '@/components/icons'
@@ -115,6 +115,13 @@ export function Navbar() {
           >
             Download Resume
           </a>
+          <a
+            href="#/dashboard"
+            className={cn(buttonClass({ variant: 'default', size: 'sm' }), 'ml-1 hidden sm:inline-flex')}
+          >
+            <LayoutDashboard className="size-4" />
+            Dashboard
+          </a>
           <Button
             variant="ghost"
             size="icon"
@@ -161,6 +168,16 @@ export function Navbar() {
             <li>
               <a href={site.resumePath} className="block py-3 text-lg" onClick={() => setOpen(false)}>
                 Download Resume
+              </a>
+            </li>
+            <li>
+              <a
+                href="#/dashboard"
+                className="flex items-center gap-2 py-3 text-lg"
+                onClick={() => setOpen(false)}
+              >
+                <LayoutDashboard className="size-4" />
+                Dashboard
               </a>
             </li>
           </ul>

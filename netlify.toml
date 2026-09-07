@@ -1,0 +1,33 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/auth"
+  to = "/.netlify/functions/auth"
+  status = 200
+
+[[redirects]]
+  from = "/api/github"
+  to = "/.netlify/functions/github"
+  status = 200
+
+[[redirects]]
+  from = "/api/amli"
+  to = "/.netlify/functions/amli"
+  status = 200
+
+[[redirects]]
+  from = "/api/amli-sync"
+  to = "/.netlify/functions/amli-sync"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Runs every morning at 05:30 UTC (11:00 AM IST) to refresh the AMLI_Vault snapshot.
+[functions."amli-sync"]
+  schedule = "30 5 * * *"
