@@ -1,4 +1,4 @@
-import { LayoutDashboard, Menu, Moon, Sun, X } from 'lucide-react'
+import { LayoutDashboard, Menu, Moon, Sun, Monitor, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useCommand } from '@/components/CommandPalette'
 import { GitHubIcon, LinkedInIcon } from '@/components/icons'
@@ -6,14 +6,15 @@ import { Button, buttonClass } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/kbd'
 import { useTheme } from '@/components/ThemeProvider'
 import { site } from '@/data/site'
+import { navigate, navigateDashboard } from '@/lib/router'
 import { cn } from '@/lib/utils'
 
-const links = [
-  { href: '#about', label: 'About' },
-  { href: '#skills', label: 'Skills' },
-  { href: '#experience', label: 'Experience' },
-  { href: '#projects', label: 'Projects' },
-  { href: '#contact', label: 'Contact' },
+const navLinks = [
+  { page: 'work' as const, label: 'Work' },
+  { page: 'lab' as const, label: 'Lab' },
+  { page: 'experience' as const, label: 'Experience' },
+  { page: 'knowledge' as const, label: 'Knowledge' },
+  { page: 'now' as const, label: 'Now' },
 ] as const
 
 export function Navbar() {
@@ -36,6 +37,18 @@ export function Navbar() {
     }
   }, [open])
 
+  const themeIcons = {
+    dark: <Sun className="size-4" />,
+    light: <Moon className="size-4" />,
+    system: <Monitor className="size-4" />,
+  } as const
+
+  const themeLabels = {
+    dark: 'Switch to light theme',
+    light: 'Switch to system theme',
+    system: 'Switch to dark theme',
+  } as const
+
   return (
     <header
       className={cn(
@@ -51,18 +64,23 @@ export function Navbar() {
         )}
         aria-label="Primary"
       >
-        <a href="#top" className="font-semibold tracking-tight text-[var(--color-fg)]">
+        <button
+          type="button"
+          onClick={() => navigate('home')}
+          className="font-semibold tracking-tight text-[var(--color-fg)]"
+        >
           {site.name}
-        </a>
-        <ul className="hidden items-center gap-6 md:flex">
-          {links.map((link) => (
-            <li key={link.href}>
-              <a
-                href={link.href}
-                className="text-sm text-[var(--color-fg-muted)] transition-colors hover:text-[var(--color-fg)]"
+        </button>
+        <ul className="hidden items-center gap-1 md:flex">
+          {navLinks.map((link) => (
+            <li key={link.page}>
+              <button
+                type="button"
+                onClick={() => navigate(link.page)}
+                className="text-sm text-[var(--color-fg-muted)] transition-colors hover:text-[var(--color-fg)] px-2 py-1"
               >
                 {link.label}
-              </a>
+              </button>
             </li>
           ))}
         </ul>
@@ -105,9 +123,9 @@ export function Navbar() {
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
-            aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+            aria-label={themeLabels[theme]}
           >
-            {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
+            {themeIcons[theme]}
           </Button>
           <a
             href={site.resumePath}
@@ -116,7 +134,8 @@ export function Navbar() {
             Download Resume
           </a>
           <a
-            href="#/dashboard"
+            href="#"
+            onClick={(e) => { e.preventDefault(); navigateDashboard('overview') }}
             className={cn(buttonClass({ variant: 'default', size: 'sm' }), 'ml-1 hidden sm:inline-flex')}
           >
             <LayoutDashboard className="size-4" />
@@ -142,25 +161,22 @@ export function Navbar() {
             </Button>
           </div>
           <ul className="flex flex-col gap-2 px-6 py-8">
-            {links.map((link) => (
-              <li key={link.href}>
-                <a
-                  href={link.href}
-                  className="block py-3 text-lg"
-                  onClick={() => setOpen(false)}
+            {navLinks.map((link) => (
+              <li key={link.page}>
+                <button
+                  type="button"
+                  onClick={() => { setOpen(false); navigate(link.page) }}
+                  className="block py-3 text-lg text-left"
                 >
                   {link.label}
-                </a>
+                </button>
               </li>
             ))}
             <li>
               <button
                 type="button"
-                className="block py-3 text-lg"
-                onClick={() => {
-                  setOpen(false)
-                  openPalette()
-                }}
+                onClick={() => { setOpen(false); openPalette() }}
+                className="block py-3 text-lg text-left"
               >
                 Commands
               </button>
@@ -171,14 +187,13 @@ export function Navbar() {
               </a>
             </li>
             <li>
-              <a
-                href="#/dashboard"
+              <button
+                onClick={() => { setOpen(false); navigateDashboard('overview') }}
                 className="flex items-center gap-2 py-3 text-lg"
-                onClick={() => setOpen(false)}
               >
                 <LayoutDashboard className="size-4" />
                 Dashboard
-              </a>
+              </button>
             </li>
           </ul>
         </div>

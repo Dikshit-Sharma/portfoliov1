@@ -10,6 +10,9 @@ import {
 import { useTheme } from '@/components/ThemeProvider'
 import { Kbd } from '@/components/ui/kbd'
 import { amliLinks, site } from '@/data/site'
+import { projects } from '@/data/projects'
+import { navigate, navigateDashboard } from '@/lib/router'
+import { Terminal } from '@/components/Terminal'
 import { cn } from '@/lib/utils'
 
 type Overlay = 'closed' | 'palette' | 'help'
@@ -26,6 +29,7 @@ type CommandContextValue = {
   openPalette: () => void
   openHelp: () => void
   modKey: string
+  openTerminal: () => void
 }
 
 const CommandContext = createContext<CommandContextValue | null>(null)
@@ -40,10 +44,6 @@ function isTypingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false
   if (target.isContentEditable) return true
   return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)
-}
-
-function scrollToId(id: string) {
-  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 }
 
 function useModKey() {
@@ -61,110 +61,49 @@ export function CommandProvider({
   children: ReactNode
   onOpenAmli: () => void
 }) {
-  const { toggleTheme } = useTheme()
+  const { setTheme } = useTheme()
   const [overlay, setOverlay] = useState<Overlay>('closed')
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
+  const listRef = useRef<HTMLUListElement>(null)
+  const activeRef = useRef<HTMLButtonElement>(null)
   const modKey = useModKey()
+  const [terminalOpen, setTerminalOpen] = useState(false)
 
   const commands = useMemo<Command[]>(
     () => [
-      { id: 'about', label: 'Go to About', group: 'Navigate', hint: 'about', run: () => scrollToId('about') },
-      { id: 'skills', label: 'Go to Skills', group: 'Navigate', hint: 'skills', run: () => scrollToId('skills') },
-      {
-        id: 'experience',
-        label: 'Go to Experience',
-        group: 'Navigate',
-        hint: 'work',
-        run: () => scrollToId('experience'),
-      },
-      {
-        id: 'projects',
-        label: 'Go to Projects',
-        group: 'Navigate',
-        hint: 'build',
-        run: () => scrollToId('projects'),
-      },
-      {
-        id: 'education',
-        label: 'Go to Education',
-        group: 'Navigate',
-        hint: 'school',
-        run: () => scrollToId('education'),
-      },
-      {
-        id: 'contact',
-        label: 'Go to Contact',
-        group: 'Navigate',
-        hint: 'hello',
-        run: () => scrollToId('contact'),
-      },
-      {
-        id: 'amli',
-        label: 'Open AMLI Tools details',
-        group: 'Projects',
-        hint: 'amli',
-        run: onOpenAmli,
-      },
-      {
-        id: 'amli-live',
-        label: 'Open AMLI live app',
-        group: 'Projects',
-        hint: 'live',
-        run: () => window.open(amliLinks.live, '_blank', 'noreferrer'),
-      },
-      {
-        id: 'reposcope',
-        label: 'Open RepoScope extension',
-        group: 'Projects',
-        hint: 'edge',
-        run: () => window.open(amliLinks.extension, '_blank', 'noreferrer'),
-      },
-      {
-        id: 'github',
-        label: 'Open GitHub',
-        group: 'Connect',
-        hint: 'gh',
-        run: () => window.open(site.github, '_blank', 'noreferrer'),
-      },
-      {
-        id: 'linkedin',
-        label: 'Open LinkedIn',
-        group: 'Connect',
-        hint: 'in',
-        run: () => window.open(site.linkedin, '_blank', 'noreferrer'),
-      },
-      {
-        id: 'email',
-        label: 'Send Email',
-        group: 'Connect',
-        hint: 'mail',
-        run: () => window.open(`mailto:${site.email}`),
-      },
-      {
-        id: 'resume',
-        label: 'Download Resume',
-        group: 'Connect',
-        hint: 'cv',
-        run: () => window.open(site.resumePath, '_blank', 'noreferrer'),
-      },
-      {
-        id: 'theme',
-        label: 'Toggle theme',
-        group: 'Site',
-        hint: 'theme',
-        run: toggleTheme,
-      },
-      {
-        id: 'help',
-        label: 'Show keyboard shortcuts',
-        group: 'Site',
-        hint: '?',
-        run: () => setOverlay('help'),
-      },
+      { id: 'work', label: 'Go to Work', group: 'Navigate', hint: 'G P', run: () => navigate('work') },
+      { id: 'lab', label: 'Go to Lab', group: 'Navigate', hint: 'G L', run: () => navigate('lab') },
+      { id: 'experience', label: 'Go to Experience', group: 'Navigate', hint: 'G E', run: () => navigate('experience') },
+      { id: 'knowledge', label: 'Go to Knowledge', group: 'Navigate', hint: 'G K', run: () => navigate('knowledge') },
+      { id: 'now', label: 'Go to Now', group: 'Navigate', hint: 'G N', run: () => navigate('now') },
+      { id: 'contact', label: 'Go to Contact', group: 'Navigate', hint: 'G C', run: () => navigate('contact') },
+      { id: 'recruiter', label: 'Open Recruiter Mode', group: 'Navigate', hint: 'recruiter', run: () => navigate('recruiter') },
+      { id: 'dashboard', label: 'Open Dashboard', group: 'Navigate', hint: 'G D', run: () => navigateDashboard('overview') },
+      { id: 'changelog', label: 'View Changelog', group: 'Navigate', hint: 'changelog', run: () => navigate('changelog') },
+      { id: 'amli', label: 'Open AMLI Tools details', group: 'Projects', hint: 'amli', run: onOpenAmli },
+      { id: 'amli-live', label: 'Open AMLI live app', group: 'Projects', hint: 'live', run: () => window.open(amliLinks.live, '_blank', 'noreferrer') },
+      { id: 'reposcope', label: 'Open RepoScope extension', group: 'Projects', hint: 'edge', run: () => window.open(amliLinks.extension, '_blank', 'noreferrer') },
+      ...projects.map((project): Command => ({
+        id: `project-${project.id}`,
+        label: `Open project: ${project.name}`,
+        group: 'Deep Dive',
+        hint: project.kicker,
+        run: () => navigate('work', project.id),
+      })),
+      { id: 'terminal', label: 'Open Terminal', group: 'Actions', hint: 'T', run: () => setTerminalOpen(true) },
+      { id: 'github', label: 'Open GitHub', group: 'Connect', hint: 'gh', run: () => window.open(site.github, '_blank', 'noreferrer') },
+      { id: 'linkedin', label: 'Open LinkedIn', group: 'Connect', hint: 'in', run: () => window.open(site.linkedin, '_blank', 'noreferrer') },
+      { id: 'email', label: 'Send Email', group: 'Connect', hint: 'mail', run: () => window.open(`mailto:${site.email}`) },
+      { id: 'resume', label: 'Download Resume', group: 'Connect', hint: 'cv', run: () => window.open(site.resumePath, '_blank', 'noreferrer') },
+      { id: 'theme-dark', label: 'Theme: Dark', group: 'Theme', hint: 'theme dark', run: () => setTheme('dark') },
+      { id: 'theme-light', label: 'Theme: Light', group: 'Theme', hint: 'theme light', run: () => setTheme('light') },
+      { id: 'theme-system', label: 'Theme: System', group: 'Theme', hint: 'theme system', run: () => setTheme('system') },
+      { id: 'recruiter-mode', label: 'Recruiter Mode', group: 'Site', hint: 'recruiter', run: () => navigate('recruiter') },
+      { id: 'help', label: 'Show keyboard shortcuts', group: 'Site', hint: '?', run: () => setOverlay('help') },
     ],
-    [onOpenAmli, toggleTheme],
+    [onOpenAmli, setTheme],
   )
 
   const filtered = useMemo(() => {
@@ -197,6 +136,7 @@ export function CommandProvider({
       }
       if (event.key === 'Escape') {
         setOverlay('closed')
+        setTerminalOpen(false)
         return
       }
       if (event.key === '?' && !event.ctrlKey && !event.metaKey && !event.altKey) {
@@ -207,6 +147,64 @@ export function CommandProvider({
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  // Global shortcuts: ? help, T terminal, R resume, G <key> navigation leader
+  useEffect(() => {
+    let pendingG = false
+    let gTimer: number | undefined
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (isTypingTarget(event.target)) return
+      if (event.ctrlKey || event.metaKey || event.altKey) return
+
+      const key = event.key.toLowerCase()
+
+      // T — open terminal
+      if (key === 't') {
+        event.preventDefault()
+        setTerminalOpen(true)
+        return
+      }
+      // R — open resume
+      if (key === 'r') {
+        event.preventDefault()
+        window.open(site.resumePath, '_blank', 'noreferrer')
+        return
+      }
+      // G — arm the navigation leader (press G then P / E / L / N / K / D / C)
+      if (key === 'g') {
+        event.preventDefault()
+        pendingG = true
+        gTimer = window.setTimeout(() => {
+          pendingG = false
+        }, 1600)
+        return
+      }
+      if (pendingG) {
+        pendingG = false
+        if (gTimer) window.clearTimeout(gTimer)
+        const destinations: Record<string, () => void> = {
+          p: () => navigate('work'),
+          e: () => navigate('experience'),
+          l: () => navigate('lab'),
+          n: () => navigate('now'),
+          k: () => navigate('knowledge'),
+          d: () => navigateDashboard('overview'),
+          c: () => navigate('contact'),
+        }
+        const handler = destinations[key]
+        if (handler) {
+          event.preventDefault()
+          handler()
+        }
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      if (gTimer) window.clearTimeout(gTimer)
+    }
   }, [])
 
   useEffect(() => {
@@ -221,12 +219,27 @@ export function CommandProvider({
     setActive(0)
   }, [query])
 
+  // Keep the active command visible while navigating with arrow keys.
   useEffect(() => {
-    document.body.style.overflow = overlay === 'closed' ? '' : 'hidden'
+    if (overlay !== 'palette') return
+    const el = activeRef.current
+    const scroller = listRef.current
+    if (!el || !scroller) return
+    const scrollerRect = scroller.getBoundingClientRect()
+    const elRect = el.getBoundingClientRect()
+    if (elRect.top < scrollerRect.top) {
+      scroller.scrollTop += elRect.top - scrollerRect.top
+    } else if (elRect.bottom > scrollerRect.bottom) {
+      scroller.scrollTop += elRect.bottom - scrollerRect.bottom
+    }
+  }, [active, query, overlay])
+
+  useEffect(() => {
+    document.body.style.overflow = overlay === 'closed' && !terminalOpen ? '' : 'hidden'
     return () => {
       document.body.style.overflow = ''
     }
-  }, [overlay])
+  }, [overlay, terminalOpen])
 
   const run = (command: Command) => {
     const stayOpen = command.id === 'help'
@@ -239,6 +252,7 @@ export function CommandProvider({
       openPalette: () => setOverlay('palette'),
       openHelp: () => setOverlay('help'),
       modKey,
+      openTerminal: () => setTerminalOpen(true),
     }),
     [modKey],
   )
@@ -287,7 +301,7 @@ export function CommandProvider({
                 spellCheck={false}
               />
             </div>
-            <ul className="scrollbar-thin max-h-80 overflow-y-auto p-2">
+            <ul ref={listRef} className="scrollbar-thin max-h-80 overflow-y-auto p-2">
               {filtered.length === 0 ? (
                 <li className="px-3 py-6 text-sm text-[var(--color-fg-muted)]">
                   command not found: {query}
@@ -305,6 +319,7 @@ export function CommandProvider({
                           <li key={command.id}>
                             <button
                               type="button"
+                              ref={index === active ? activeRef : undefined}
                               onMouseEnter={() => setActive(index)}
                               onClick={() => run(command)}
                               className={cn(
@@ -379,6 +394,63 @@ export function CommandProvider({
                   <span>Close overlay</span>
                   <Kbd>esc</Kbd>
                 </li>
+                <li className="flex items-center justify-between gap-4">
+                  <span>Open Terminal</span>
+                  <Kbd>T</Kbd>
+                </li>
+                <li className="flex items-center justify-between gap-4">
+                  <span>Projects (Work)</span>
+                  <span className="flex gap-1">
+                    <Kbd>G</Kbd>
+                    <Kbd>P</Kbd>
+                  </span>
+                </li>
+                <li className="flex items-center justify-between gap-4">
+                  <span>Experience</span>
+                  <span className="flex gap-1">
+                    <Kbd>G</Kbd>
+                    <Kbd>E</Kbd>
+                  </span>
+                </li>
+                <li className="flex items-center justify-between gap-4">
+                  <span>Lab</span>
+                  <span className="flex gap-1">
+                    <Kbd>G</Kbd>
+                    <Kbd>L</Kbd>
+                  </span>
+                </li>
+                <li className="flex items-center justify-between gap-4">
+                  <span>Knowledge</span>
+                  <span className="flex gap-1">
+                    <Kbd>G</Kbd>
+                    <Kbd>K</Kbd>
+                  </span>
+                </li>
+                <li className="flex items-center justify-between gap-4">
+                  <span>Now</span>
+                  <span className="flex gap-1">
+                    <Kbd>G</Kbd>
+                    <Kbd>N</Kbd>
+                  </span>
+                </li>
+                <li className="flex items-center justify-between gap-4">
+                  <span>Dashboard</span>
+                  <span className="flex gap-1">
+                    <Kbd>G</Kbd>
+                    <Kbd>D</Kbd>
+                  </span>
+                </li>
+                <li className="flex items-center justify-between gap-4">
+                  <span>Contact</span>
+                  <span className="flex gap-1">
+                    <Kbd>G</Kbd>
+                    <Kbd>C</Kbd>
+                  </span>
+                </li>
+                <li className="flex items-center justify-between gap-4">
+                  <span>Download Resume</span>
+                  <Kbd>R</Kbd>
+                </li>
               </ul>
               <p className="pt-2 text-xs leading-relaxed">
                 New here? Press {modKey}+K anytime to jump to a section, open AMLI Tools, or
@@ -388,6 +460,9 @@ export function CommandProvider({
           </div>
         </div>
       ) : null}
+      {terminalOpen && (
+        <Terminal onClose={() => setTerminalOpen(false)} />
+      )}
       <ShortcutHint />
     </CommandContext.Provider>
   )
