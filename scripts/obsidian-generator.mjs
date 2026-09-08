@@ -21,6 +21,38 @@ const DATA_DIR = new URL('../public/obsidian-data/', import.meta.url);
 // Folders we never surface publicly (config + company data).
 const IGNORE = new Set(['.git', '.obsidian', 'Attachments', 'AMLI_Vault']);
 
+/** Check if a note's frontmatter explicitly marks it as public. */
+function isPublicNote(frontmatter) {
+  if (!frontmatter) return false;
+  // Accept boolean true or string "true" (YAML parsing quirks)
+  return frontmatter.public === true || frontmatter.public === 'true';
+}
+
+/** Extract YAML frontmatter from markdown content. */
+function parseFrontmatter(content) {
+  const lines = content.split(/\r?\n/);
+  if (lines[0]?.trim() !== '---') return null;
+  const end = lines.slice(1).findIndex((l) => l.trim() === '---');
+  if (end < 0) return null;
+  const fmLines = lines.slice(1, end + 1).join('\n');
+  // Tiny YAML subset parser for key: value pairs (no nested objects)
+  const fm = {};
+  for (const line of fmLines.split(/\r?\n/)) {
+    const m = line.match(/^\s*([^:]+?)\s*:\s*(.+)\s*$/);
+    if (m) {
+      let val = m[2].trim();
+      // Strip quotes
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+        val = val.slice(1, -1);
+      }
+      // Boolean
+      if (val === 'true' || val === 'false') val = val === 'true';
+      fm[m[1].trim()] = val;
+    }
+  }
+  return fm;
+}
+
 const CATEGORY_DEFAULTS = {
   Meldora_Novel_Vault: {
     id: 'meldora',
@@ -75,9 +107,11 @@ function describeNote(full, base) {
   let heading = '';
   let excerpt = '';
   let content = '';
+  let frontmatter = null;
   try {
     const raw = readFileSync(full, 'utf8');
     content = raw;
+    frontmatter = parseFrontmatter(raw);
     const lines = raw.split(/\r?\n/);
     for (const line of lines) {
       const h = line.match(/^#\s+(.+)/);
@@ -98,7 +132,7 @@ function describeNote(full, base) {
     }
   } catch { /* ignore */ }
   // Sanitize Obsidian wikilinks for display but keep raw content for export.
-  return { title, path: rel, heading: heading || title, excerpt, content };
+  return { title, path: rel, heading: heading || title, excerpt, content, frontmatter };
 }
 
 function build() {
@@ -123,8 +157,11 @@ function build() {
     const def = CATEGORY_DEFAULTS[folder] || {};
     const id = def.id || folder.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
+    // Filter notes: only include those explicitly marked public: true in frontmatter.
+    const publicNotes = notes.filter((n) => isPublicNote(n.frontmatter));
+
     // Sort notes: any README/Synopsis first, then by name.
-    notes.sort((a, b) => {
+    publicNotes.sort((a, b) => {
       const aIsTop = /^(README|Synopsis|Dashboard)/i.test(a.title);
       const bIsTop = /^(README|Synopsis|Dashboard)/i.test(b.title);
       if (aIsTop && !bIsTop) return -1;
@@ -139,12 +176,12 @@ function build() {
       color: def.color || '#60a5fa',
       description: def.description || '',
       folder,
-      noteCount: notes.length,
+      noteCount: publicNotes.length,
       fileCount: files,
       subfolderCount: dirs,
       dataUrl: `obsidian-data/${id}.json`,
     });
-    totalNotes += notes.length;
+    totalNotes += publicNotes.length;
 
     const dataFile = join(DATA_DIR.pathname, `${id}.json`);
     writeFileSync(
@@ -153,7 +190,7 @@ function build() {
         category: id,
         label: def.label || folder,
         generatedAt: now,
-        notes: notes.map((n) => ({ title: n.title, path: n.path, heading: n.heading, content: n.content })),
+        notes: publicNotes.map((n) => ({ title: n.title, path: n.path, heading: n.heading, content: n.content })),
       }),
     );
   }

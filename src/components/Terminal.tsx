@@ -7,6 +7,7 @@ import { experience } from '@/data/experience'
 import { labProjects } from '@/data/lab'
 import { nowData } from '@/data/now'
 import { changelog, getLatestVersion } from '@/data/changelog'
+import { registry, searchRegistry } from '@/lib/registry'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
@@ -20,6 +21,17 @@ type TerminalCommand = {
 type TerminalOutput = {
   lines: (string | { type: 'badge'; text: string; color?: string } | { type: 'link'; text: string; href: string } | { type: 'header'; text: string } | { type: 'list'; items: string[] })[]
   error?: boolean
+}
+
+/** Non-verbose aliases that resolve to canonical commands. */
+const COMMAND_ALIASES: Record<string, string> = {
+  work: 'projects',
+  proj: 'projects',
+  exp: 'experience',
+  tech: 'skills',
+  ls: 'projects',
+  contacts: 'contact',
+  info: 'inspect',
 }
 
 export function Terminal({ onClose }: { onClose: () => void }) {
@@ -82,6 +94,13 @@ export function Terminal({ onClose }: { onClose: () => void }) {
           '  inspect        Show portfolio tech stack',
           '  neofetch       Show system info',
           '  sudo hire dikshit  Easter egg',
+          '',
+          { type: 'header', text: 'Aliases & Search' },
+          '  work / proj    Same as projects',
+          '  exp            Same as experience',
+          '  tech           Same as skills',
+          '  knowledge      List knowledge categories',
+          '  search <query> Search projects, tech, experience, knowledge',
           '',
           { type: 'header', text: 'Shortcuts' },
           `  ${modKey}+K         Command palette`,
@@ -243,14 +262,16 @@ export function Terminal({ onClose }: { onClose: () => void }) {
     contact: {
       name: 'contact',
       description: 'Show contact information',
+      usage: 'contact | email',
       run: () => ({
         lines: [
           { type: 'header', text: 'CONTACT' },
           '',
           `  Email: ${site.email}`,
-          `  Phone: ${site.phone}`,
           `  GitHub: ${site.github}`,
           `  LinkedIn: ${site.linkedin}`,
+          '',
+          '  Prefer email for opportunities and collaborations.',
           '',
         ],
       }),
@@ -272,6 +293,53 @@ export function Terminal({ onClose }: { onClose: () => void }) {
           '  ... and more. Use "changelog full" for complete history.',
         ],
       }),
+    },
+    knowledge: {
+      name: 'knowledge',
+      description: 'Show knowledge categories',
+      run: () => ({
+        lines: [
+          { type: 'header', text: 'KNOWLEDGE' },
+          '',
+          ...registry
+            .filter((entity) => entity.type === 'knowledge')
+            .flatMap((entity) => [
+              { type: 'link' as const, text: `  ${entity.label} — ${entity.description}`, href: `#${entity.path}` },
+              '',
+            ]),
+          '  Tip: open the Knowledge page for the interactive graph.',
+          '',
+        ],
+      }),
+    },
+    search: {
+      name: 'search',
+      description: 'Search projects, technologies, experience, knowledge',
+      usage: 'search <query>',
+      run: (args) => {
+        const q = args.join(' ')
+        if (!q) {
+          return {
+            lines: ['Usage: search <query>', 'Example: search spring', 'Example: search java'],
+            error: true,
+          }
+        }
+        const results = searchRegistry(q, 8)
+        if (results.length === 0) {
+          return { lines: [`No results for "${q}". Try "search java" or "search project".`] }
+        }
+        return {
+          lines: [
+            { type: 'header', text: `SEARCH · ${results.length} RESULT${results.length === 1 ? '' : 'S'}` },
+            '',
+            ...results.flatMap((r) => [
+              { type: 'link' as const, text: `  ${r.label}`, href: `#${r.path}` },
+              { type: 'link' as const, text: `       ${r.description}`, href: `#${r.path}` },
+              '',
+            ]),
+          ],
+        }
+      },
     },
     clear: {
       name: 'clear',
@@ -367,7 +435,8 @@ export function Terminal({ onClose }: { onClose: () => void }) {
     const name = parts[0].toLowerCase()
     const args = parts.slice(1)
 
-    const command = commands[name]
+    const resolved = COMMAND_ALIASES[name] ?? name
+    const command = commands[resolved]
     let result: TerminalOutput
 
     if (command) {
@@ -431,8 +500,13 @@ export function Terminal({ onClose }: { onClose: () => void }) {
       )
     }
     if (line.type === 'link') {
+      const isExternal = line.href.startsWith('http')
       return (
-        <a href={line.href} target="_blank" rel="noreferrer" className="font-mono text-sm text-indigo-400 hover:underline">
+        <a
+          href={line.href}
+          {...(isExternal ? { target: '_blank', rel: 'noreferrer' } : {})}
+          className="font-mono text-sm text-indigo-400 hover:underline"
+        >
           {line.text}
         </a>
       )

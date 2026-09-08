@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { CommandProvider } from '@/components/CommandPalette'
 import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
@@ -6,12 +6,10 @@ import { ThemeProvider } from '@/components/ThemeProvider'
 import { WorkPage, ProjectDetailPage } from '@/components/WorkPage'
 import { LabPage, LabDetailPage } from '@/components/LabPage'
 import { NowPage } from '@/components/NowPage'
-import { KnowledgePage } from '@/components/KnowledgePage'
 import { RecruiterPage } from '@/components/RecruiterPage'
 import { ContactPage } from '@/components/ContactPage'
 import { ChangelogPage } from '@/components/ChangelogPage'
 import { NotFoundPage } from '@/components/NotFoundPage'
-import { Dashboard } from '@/dashboard/Dashboard'
 import { About } from '@/components/About'
 import { AmliToolsDetail } from '@/components/AmliToolsDetail'
 import { Education } from '@/components/Education'
@@ -21,7 +19,13 @@ import { ProjectsSection } from '@/components/ProjectsSection'
 import { ImpactSection } from '@/components/ImpactSection'
 import { ScrollProgress } from '@/components/ScrollProgress'
 import { Skills } from '@/components/Skills'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { usePageMeta } from '@/lib/seo'
 import { useHashRoute, isDashboardRoute } from '@/lib/router'
+
+// Heavy subsystems load only when actually needed.
+const Dashboard = lazy(() => import('@/dashboard/Dashboard').then((m) => ({ default: m.Dashboard })))
+const KnowledgePage = lazy(() => import('@/components/KnowledgePage').then((m) => ({ default: m.KnowledgePage })))
 
 function useOnDashboard() {
   const [isDashboard, setIsDashboard] = useState(() => isDashboardRoute())
@@ -33,15 +37,28 @@ function useOnDashboard() {
   return isDashboard
 }
 
+function PageLoader({ label }: { label: string }) {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center">
+      <p className="font-mono text-xs text-[var(--color-fg-muted)]">loading {label}…</p>
+    </div>
+  )
+}
+
 export default function App() {
   const [amliOpen, setAmliOpen] = useState(false)
   const isDashboard = useOnDashboard()
   const { route, subRoute } = useHashRoute()
+  usePageMeta(route, subRoute)
 
   if (isDashboard) {
     return (
       <ThemeProvider>
-        <Dashboard />
+        <ErrorBoundary label="dashboard">
+          <Suspense fallback={<PageLoader label="control center" />}>
+            <Dashboard />
+          </Suspense>
+        </ErrorBoundary>
       </ThemeProvider>
     )
   }
@@ -49,13 +66,27 @@ export default function App() {
   const renderPage = () => {
     switch (route) {
       case 'work':
-        return subRoute ? <ProjectDetailPage projectId={subRoute} /> : <WorkPage />
+        return (
+          <ErrorBoundary label="projects">
+            {subRoute ? <ProjectDetailPage projectId={subRoute} /> : <WorkPage />}
+          </ErrorBoundary>
+        )
       case 'lab':
-        return subRoute ? <LabDetailPage projectId={subRoute} /> : <LabPage />
+        return (
+          <ErrorBoundary label="lab">
+            {subRoute ? <LabDetailPage projectId={subRoute} /> : <LabPage />}
+          </ErrorBoundary>
+        )
       case 'experience':
         return <Experience />
       case 'knowledge':
-        return <KnowledgePage />
+        return (
+          <ErrorBoundary label="knowledge graph">
+            <Suspense fallback={<PageLoader label="knowledge" />}>
+              <KnowledgePage />
+            </Suspense>
+          </ErrorBoundary>
+        )
       case 'now':
         return <NowPage />
       case 'recruiter':
