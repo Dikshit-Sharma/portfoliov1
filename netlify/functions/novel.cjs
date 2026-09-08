@@ -17,6 +17,33 @@ const GITHUB = 'https://api.github.com';
 
 const ALLOWED_ORIGINS = ['https://dikshitsharma.netlify.app', 'https://portfoliov1.netlify.app', 'http://localhost:5173', 'http://localhost:8888'];
 
+// Extract YAML frontmatter from markdown content.
+function parseFrontmatter(content) {
+  const lines = content.split(/\r?\n/);
+  if (lines[0]?.trim() !== '---') return null;
+  const end = lines.slice(1).findIndex((l) => l.trim() === '---');
+  if (end < 0) return null;
+  const fmLines = lines.slice(1, end + 1).join('\n');
+  const fm = {};
+  for (const line of fmLines.split(/\r?\n/)) {
+    const m = line.match(/^\s*([^:]+?)\s*:\s*(.+)\s*$/);
+    if (m) {
+      let val = m[2].trim();
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+        val = val.slice(1, -1);
+      }
+      if (val === 'true' || val === 'false') val = val === 'true';
+      fm[m[1].trim()] = val;
+    }
+  }
+  return fm;
+}
+
+function isPublicNote(frontmatter) {
+  if (!frontmatter) return false;
+  return frontmatter.public === true || frontmatter.public === 'true';
+}
+
 function headers() {
   const h = { 'User-Agent': 'dashboard', Accept: 'application/vnd.github+json' };
   const token = process.env.GITHUB_TOKEN || '';
@@ -136,6 +163,11 @@ async function sync(repo, existing) {
     const folder = parts.length > 1 ? parts[0] : repoInfo.name;
     if (IGNORED_TOP.has(folder) || !files[t.path]) continue;
     const file = files[t.path];
+
+    // Skip notes that are not explicitly marked public: true
+    const frontmatter = parseFrontmatter(file.content);
+    if (!isPublicNote(frontmatter)) continue;
+
     const title = t.path.replace(/\.md$/, '').split('/').pop();
     let heading = title;
     let excerpt = '';

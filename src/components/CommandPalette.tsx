@@ -1,5 +1,7 @@
 import {
   createContext,
+  lazy,
+  Suspense,
   useContext,
   useEffect,
   useMemo,
@@ -11,9 +13,11 @@ import { useTheme } from '@/components/ThemeProvider'
 import { Kbd } from '@/components/ui/kbd'
 import { amliLinks, site } from '@/data/site'
 import { projects } from '@/data/projects'
+import { registry } from '@/lib/registry'
 import { navigate, navigateDashboard } from '@/lib/router'
-import { Terminal } from '@/components/Terminal'
 import { cn } from '@/lib/utils'
+
+const Terminal = lazy(() => import('@/components/Terminal').then((m) => ({ default: m.Terminal })))
 
 type Overlay = 'closed' | 'palette' | 'help'
 
@@ -92,6 +96,26 @@ export function CommandProvider({
         hint: project.kicker,
         run: () => navigate('work', project.id),
       })),
+      ...registry
+        .filter((entity) => entity.type === 'experience')
+        .map((entity): Command => ({
+          id: entity.id,
+          label: entity.label,
+          group: 'Experience',
+          hint: 'role',
+          run: () => navigate('experience'),
+        })),
+      ...registry
+        .filter((entity) => entity.type === 'technology')
+        .map((entity): Command => ({
+          id: entity.id,
+          label: `Technology: ${entity.label}`,
+          group: 'Technologies',
+          hint: 'tech',
+          run: () => {
+            window.location.hash = entity.path
+          },
+        })),
       { id: 'terminal', label: 'Open Terminal', group: 'Actions', hint: 'T', run: () => setTerminalOpen(true) },
       { id: 'github', label: 'Open GitHub', group: 'Connect', hint: 'gh', run: () => window.open(site.github, '_blank', 'noreferrer') },
       { id: 'linkedin', label: 'Open LinkedIn', group: 'Connect', hint: 'in', run: () => window.open(site.linkedin, '_blank', 'noreferrer') },
@@ -461,7 +485,9 @@ export function CommandProvider({
         </div>
       ) : null}
       {terminalOpen && (
-        <Terminal onClose={() => setTerminalOpen(false)} />
+        <Suspense fallback={null}>
+          <Terminal onClose={() => setTerminalOpen(false)} />
+        </Suspense>
       )}
       <ShortcutHint />
     </CommandContext.Provider>
