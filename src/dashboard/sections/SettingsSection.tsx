@@ -1,97 +1,115 @@
-import { Copy, KeyRound, RefreshCw, ShieldCheck } from 'lucide-react'
+import { BookOpen, Cpu, Database, FileText, KeyRound, RefreshCw, ShieldCheck } from 'lucide-react'
 import { Card } from '@/dashboard/components/charts'
-
-function EnvRow({ name, description, example }: { name: string; description: string; example?: string }) {
-  return (
-    <li className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-muted)] p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <code className="font-mono text-sm text-indigo-400">{name}</code>
-        <button
-          type="button"
-          className="flex items-center gap-1 text-xs text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
-          onClick={() => { navigator.clipboard?.writeText(name); alert(`Copied ${name}`) }}
-        >
-          <Copy className="size-3" /> copy
-        </button>
-      </div>
-      <p className="mt-1 text-xs text-[var(--color-fg-muted)]">{description}</p>
-      {example && <code className="mt-1 block text-[11px] text-[var(--color-fg-muted)]">{example}</code>}
-    </li>
-  )
-}
+import { GitHubIcon } from '@/components/icons'
+import { buttonClass } from '@/components/ui/button'
+import { site } from '@/data/site'
+import { getLatestVersion } from '@/data/changelog'
 
 export function SettingsSection() {
+  const version = getLatestVersion()
+
   return (
     <div className="space-y-6">
-      <Card title="How protection & fresh data work">
+      <Card title="Privacy & security">
         <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-muted)] p-4">
             <ShieldCheck className="size-5 text-emerald-400" />
             <h4 className="mt-2 font-semibold text-sm">Password gates</h4>
             <p className="mt-1 text-xs text-[var(--color-fg-muted)]">
-              Journal and AMLI Vault are locked behind a password you set on Netlify. Verification runs server-side via
-              the <code className="font-mono">/api/auth</code> function — no password is stored in the browser.
+              Journal and AMLI Vault are locked behind a password. Verification runs server-side — no password is
+              stored in the browser.
             </p>
           </div>
           <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-muted)] p-4">
             <KeyRound className="size-5 text-indigo-400" />
             <h4 className="mt-2 font-semibold text-sm">Journal encryption</h4>
             <p className="mt-1 text-xs text-[var(--color-fg-muted)]">
-              Journal entries are AES-256-GCM encrypted in your browser with your password before being stored in
-              localStorage. Raw text never touches the network.
+              Journal entries are encrypted with AES-256-GCM in your browser using your password, then stored locally.
+              Raw text never touches the network.
             </p>
           </div>
           <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-muted)] p-4">
             <RefreshCw className="size-5 text-amber-400" />
-            <h4 className="mt-2 font-semibold text-sm">Daily AMLI sync</h4>
+            <h4 className="mt-2 font-semibold text-sm">Fresh data</h4>
             <p className="mt-1 text-xs text-[var(--color-fg-muted)]">
-              A scheduled Netlify function <code className="font-mono">amli-sync</code> refreshes the AMLI_Vault snapshot
-              every morning at 05:30 UTC and caches it for fast dashboard loads.
+              GitHub pulls live from the API, Obsidian data comes from a published snapshot, and the AMLI snapshot
+              refreshes daily before you visit.
             </p>
           </div>
         </div>
       </Card>
 
-      <Card title="Environment variables (set in Netlify → Site settings → Environment variables)">
-        <ul className="grid gap-3 md:grid-cols-2">
-          <EnvRow
-            name="DASHBOARD_PASSWORD"
-            description="Required. The single password that unlocks Journal and AMLI Vault sections."
-            example="DASHBOARD_PASSWORD=your-secret"
-          />
-          <EnvRow
-            name="GITHUB_TOKEN"
-            description="Recommended. A fine-grained PAT with repo:read. Without it the GitHub section falls back to the public unauthenticated API (lower rate limit, no contribution heatmap)."
-            example="GITHUB_TOKEN=github_pat_..."
-          />
-          <EnvRow
-            name="GITHUB_USERNAME"
-            description="Optional. Defaults to Dikshit-Sharma if unset."
-            example="GITHUB_USERNAME=Dikshit-Sharma"
-          />
-          <EnvRow
-            name="AMLI_BSA_URL"
-            description="Optional. Defaults to https://amliaes.netlify.app/api/bsa."
-          />
-          <EnvRow
-            name="AMLI_ARTIFACTS_URL"
-            description="Optional. Used for stats and auto-extracted credentials. Defaults to https://amliaes.netlify.app/api/artifacts."
-          />
-          <EnvRow
-            name="AMLI_API_KEY"
-            description="Optional. Sent as X-API-Key to the AMLI service if the upstream requires it."
-          />
-        </ul>
+      <Card title="Where the data comes from">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-muted)] p-4">
+            <div className="flex items-center gap-2">
+              <GitHubIcon className="size-5 text-indigo-400" />
+              <h4 className="font-semibold text-sm">GitHub</h4>
+            </div>
+            <p className="mt-2 text-xs text-[var(--color-fg-muted)]">
+              Live from the GitHub API — repositories, stars, languages and contribution activity. Only public data is
+              shown, with loading and error states when the API is unavailable.
+            </p>
+          </div>
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-muted)] p-4">
+            <div className="flex items-center gap-2">
+              <FileText className="size-5 text-emerald-400" />
+              <h4 className="font-semibold text-sm">Obsidian vault</h4>
+            </div>
+            <p className="mt-2 text-xs text-[var(--color-fg-muted)]">
+              A published manifest of notes powers the category counts and the markdown reader. Protected vault content
+              stays excluded.
+            </p>
+          </div>
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-muted)] p-4">
+            <div className="flex items-center gap-2">
+              <BookOpen className="size-5 text-violet-400" />
+              <h4 className="font-semibold text-sm">Journal</h4>
+            </div>
+            <p className="mt-2 text-xs text-[var(--color-fg-muted)]">
+              Your own writing, kept in this browser and encrypted with your password. It exists only where you can see
+              it.
+            </p>
+          </div>
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-muted)] p-4">
+            <div className="flex items-center gap-2">
+              <Database className="size-5 text-amber-400" />
+              <h4 className="font-semibold text-sm">AMLI work data</h4>
+            </div>
+            <p className="mt-2 text-xs text-[var(--color-fg-muted)]">
+              A synced snapshot from the AMLI service. Public graphs render for everyone; sensitive entries are
+              password-protected.
+            </p>
+          </div>
+        </div>
       </Card>
 
-      <Card title="Regenerating Obsidian categories">
-        <p className="text-sm text-[var(--color-fg-muted)]">
-          Run <code className="font-mono">npm run gen:obsidian</code> in the repo root on your machine. It scans{' '}
-          <code className="font-mono">~/Entertainment/Obsidian/Void</code> (excluding the protected{' '}
-          <code className="font-mono">AMLI_Vault</code>), then rewrites{' '}
-          <code className="font-mono">src/data/obsidian.generated.ts</code>. Commit the change and redeploy to update the
-          categories on the live site.
-        </p>
+      <Card title="About the Control Center">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-muted)] px-4 py-3">
+            <p className="font-mono text-2xl font-semibold text-[var(--color-fg)]">{version}</p>
+            <p className="font-mono text-[11px] text-[var(--color-fg-muted)]">current build</p>
+          </div>
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-muted)] px-4 py-3">
+            <p className="font-mono text-2xl font-semibold text-[var(--color-fg)]">4</p>
+            <p className="font-mono text-[11px] text-[var(--color-fg-muted)]">live integrations</p>
+          </div>
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-muted)] px-4 py-3">
+            <p className="font-mono text-2xl font-semibold text-[var(--color-fg)]">
+              <Cpu className="size-5" />
+            </p>
+            <p className="font-mono text-[11px] text-[var(--color-fg-muted)]">React · TypeScript · serverless</p>
+          </div>
+        </div>
+        <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-[var(--color-border)] pt-4">
+          <span className="text-sm text-[var(--color-fg-muted)]">Questions or opportunities?</span>
+          <a href={`mailto:${site.email}`} className={buttonClass({ size: 'sm', variant: 'outline' })}>
+            Email me
+          </a>
+          <a href={site.resumePath} target="_blank" rel="noreferrer" className={buttonClass({ size: 'sm', variant: 'ghost' })}>
+            Download resume
+          </a>
+        </div>
       </Card>
     </div>
   )

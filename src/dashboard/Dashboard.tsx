@@ -1,4 +1,4 @@
-import { BookOpen, FolderKanban, Home, ShieldAlert, Settings, X } from 'lucide-react'
+import { FolderGit2, Home, ShieldAlert, Settings, X, Activity, Zap } from 'lucide-react'
 import { useHashTab, navigate, type DashboardTab } from '@/dashboard/lib/router'
 import { GithubSection } from '@/dashboard/sections/GithubSection'
 import { JournalSection } from '@/dashboard/sections/JournalSection'
@@ -13,8 +13,9 @@ import { cn } from '@/lib/utils'
 const TABS: { id: DashboardTab; label: string; icon: React.ReactNode }[] = [
   { id: 'overview', label: 'Overview', icon: <Home className="size-4" /> },
   { id: 'github', label: 'GitHub', icon: <GitHubIcon className="size-4" /> },
-  { id: 'journal', label: 'Journal', icon: <BookOpen className="size-4" /> },
-  { id: 'obsidian', label: 'Obsidian', icon: <FolderKanban className="size-4" /> },
+  { id: 'knowledge', label: 'Knowledge', icon: <FolderGit2 className="size-4" /> },
+  { id: 'activity', label: 'Activity', icon: <Activity className="size-4" /> },
+  { id: 'lab', label: 'Lab', icon: <Zap className="size-4" /> },
   { id: 'amli', label: 'AMLI', icon: <ShieldAlert className="size-4" /> },
   { id: 'settings', label: 'Settings', icon: <Settings className="size-4" /> },
 ]
@@ -26,15 +27,15 @@ export function Dashboard() {
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="font-mono text-xs tracking-[0.18em] text-indigo-400 uppercase">Personal dashboard</p>
+          <p className="font-mono text-xs tracking-[0.18em] text-indigo-400 uppercase">Developer Control Center</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[var(--color-fg)] sm:text-3xl">
-            Dikshit's Dashboard
+            DIKSHIT // CONTROL CENTER
           </h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {/* Back to the main site */}
           <a href="/" onClick={(e) => { e.preventDefault(); window.location.hash = ''; window.scrollTo({ top: 0 }) }} className={buttonClass({ variant: 'outline', size: 'sm' })}>
-            <X className="size-3.5" /> Back to site
+            <X className="size-3.5" /> Back to Workspace
           </a>
         </div>
       </header>
@@ -65,7 +66,9 @@ export function Dashboard() {
         {tab === 'overview' && <OverviewSection />}
         {tab === 'github' && <GithubSection />}
         {tab === 'journal' && <JournalSection />}
-        {tab === 'obsidian' && <ObsidianSection />}
+        {tab === 'knowledge' && <ObsidianSection />}
+        {tab === 'activity' && <GithubSection />}
+        {tab === 'lab' && <div className="py-8 text-center text-[var(--color-fg-muted)]">Lab integration coming soon — see /lab for experiments</div>}
         {tab === 'amli' && <AmliSection />}
         {tab === 'settings' && <SettingsSection />}
       </main>

@@ -1,19 +1,27 @@
 import { useEffect, useState } from 'react'
+import { CommandProvider } from '@/components/CommandPalette'
+import { Footer } from '@/components/Footer'
+import { Navbar } from '@/components/Navbar'
+import { ThemeProvider } from '@/components/ThemeProvider'
+import { WorkPage, ProjectDetailPage } from '@/components/WorkPage'
+import { LabPage, LabDetailPage } from '@/components/LabPage'
+import { NowPage } from '@/components/NowPage'
+import { KnowledgePage } from '@/components/KnowledgePage'
+import { RecruiterPage } from '@/components/RecruiterPage'
+import { ContactPage } from '@/components/ContactPage'
+import { ChangelogPage } from '@/components/ChangelogPage'
+import { NotFoundPage } from '@/components/NotFoundPage'
+import { Dashboard } from '@/dashboard/Dashboard'
 import { About } from '@/components/About'
 import { AmliToolsDetail } from '@/components/AmliToolsDetail'
-import { CommandProvider } from '@/components/CommandPalette'
-import { Contact } from '@/components/Contact'
-import { Dashboard } from '@/dashboard/Dashboard'
 import { Education } from '@/components/Education'
 import { Experience } from '@/components/Experience'
-import { Footer } from '@/components/Footer'
 import { Hero } from '@/components/Hero'
-import { Navbar } from '@/components/Navbar'
 import { ProjectsSection } from '@/components/ProjectsSection'
+import { ImpactSection } from '@/components/ImpactSection'
 import { ScrollProgress } from '@/components/ScrollProgress'
 import { Skills } from '@/components/Skills'
-import { ThemeProvider } from '@/components/ThemeProvider'
-import { isDashboardRoute } from '@/dashboard/lib/router'
+import { useHashRoute, isDashboardRoute } from '@/lib/router'
 
 function useOnDashboard() {
   const [isDashboard, setIsDashboard] = useState(() => isDashboardRoute())
@@ -28,6 +36,7 @@ function useOnDashboard() {
 export default function App() {
   const [amliOpen, setAmliOpen] = useState(false)
   const isDashboard = useOnDashboard()
+  const { route, subRoute } = useHashRoute()
 
   if (isDashboard) {
     return (
@@ -35,6 +44,43 @@ export default function App() {
         <Dashboard />
       </ThemeProvider>
     )
+  }
+
+  const renderPage = () => {
+    switch (route) {
+      case 'work':
+        return subRoute ? <ProjectDetailPage projectId={subRoute} /> : <WorkPage />
+      case 'lab':
+        return subRoute ? <LabDetailPage projectId={subRoute} /> : <LabPage />
+      case 'experience':
+        return <Experience />
+      case 'knowledge':
+        return <KnowledgePage />
+      case 'now':
+        return <NowPage />
+      case 'recruiter':
+        return <RecruiterPage />
+      case 'contact':
+        return <ContactPage />
+      case 'changelog':
+        return <ChangelogPage />
+      case '404':
+        return <NotFoundPage />
+      case 'home':
+      default:
+        return (
+          <>
+            <Hero />
+            <ImpactSection />
+            <About />
+            <Skills />
+            <Experience />
+            <ProjectsSection onOpenAmli={() => setAmliOpen(true)} />
+            <Education />
+            <ContactPage />
+          </>
+        )
+    }
   }
 
   return (
@@ -49,13 +95,7 @@ export default function App() {
         <ScrollProgress />
         <Navbar />
         <main id="main">
-          <Hero />
-          <About />
-          <Skills />
-          <Experience />
-          <ProjectsSection onOpenAmli={() => setAmliOpen(true)} />
-          <Education />
-          <Contact />
+          {renderPage()}
         </main>
         <Footer />
         <AmliToolsDetail open={amliOpen} onClose={() => setAmliOpen(false)} />

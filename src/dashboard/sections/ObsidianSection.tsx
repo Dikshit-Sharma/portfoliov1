@@ -2,7 +2,7 @@ import { ChevronDown, Download, FileText, FolderOpen, Loader2, X } from 'lucide-
 import { useState } from 'react'
 import { Card, Stat } from '@/dashboard/components/charts'
 import { obsidianCategories, obsidianTotalNotes, obsidianGeneratedAt } from '@/data/obsidian.generated'
-import { Button, buttonClass } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { renderMarkdown } from '@/dashboard/lib/markdown'
 import type { ObsidianNote } from '@/dashboard/lib/obsidian'
@@ -188,19 +188,11 @@ export function ObsidianSection() {
       })}
 
       <div className="rounded-xl border border-dashed border-[var(--color-border)] p-5 text-sm text-[var(--color-fg-muted)]">
-        <p className="mb-2 font-mono text-[11px] tracking-[0.16em] text-indigo-400 uppercase">Regenerate categories</p>
+        <p className="mb-1 font-mono text-[11px] tracking-[0.16em] text-indigo-400 uppercase">What's here</p>
         <p>
-          This list is generated from your vault with{' '}
-          <code className="rounded bg-[var(--color-bg-muted)] px-1 font-mono">npm run gen:obsidian</code>, which scans{' '}
-          <code className="rounded bg-[var(--color-bg-muted)] px-1 font-mono">~/Entertainment/Obsidian/Void</code> and
-          updates the manifest + per-category data. Rerun it whenever you add notes or folders, then redeploy.
+          This page shows a public snapshot of the knowledge vault — category counts, note indexes, and full markdown
+          for reading. Protected vault content is excluded.
         </p>
-        <a
-          className={buttonClass({ size: 'sm', variant: 'outline' })}
-          href="#/dashboard/settings"
-        >
-          Learn more in Settings
-        </a>
       </div>
 
       {openNote && (

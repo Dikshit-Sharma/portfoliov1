@@ -5,10 +5,13 @@ export type DashboardTab =
   | 'github'
   | 'journal'
   | 'obsidian'
+  | 'knowledge'
+  | 'activity'
+  | 'lab'
   | 'amli'
   | 'settings'
 
-const TABS: DashboardTab[] = ['overview', 'github', 'journal', 'obsidian', 'amli', 'settings']
+const TABS: DashboardTab[] = ['overview', 'github', 'journal', 'obsidian', 'knowledge', 'activity', 'lab', 'amli', 'settings']
 
 function parseHash(): DashboardTab {
   const raw = window.location.hash.replace(/^#\/?/, '')
