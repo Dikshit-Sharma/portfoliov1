@@ -25,10 +25,10 @@ Legend:
 
 | Item | Status | Notes |
 | --- | --- | --- |
-| Global entity registry / single source of truth | 🔶 | Planned: `src/lib/registry.ts` |
-| Error boundaries | ⬜ | Planned around dashboard/knowledge/graph sections |
-| Lazy loading (dashboard, terminal, knowledge) | ⬜ | Planned via `React.lazy` |
-| Per-route metadata (SEO titles) | ⬜ | Planned via `usePageMeta` |
+| Global entity registry / single source of truth | ✅ | `src/lib/registry.ts` |
+| Error boundaries | ✅ | Dashboard, Knowledge, Work/Lab deep-dives |
+| Lazy loading (dashboard, terminal, knowledge) | ✅ | Code-split chunks |
+| Per-route metadata (SEO titles) | ✅ | `src/lib/seo.ts` + `usePageMeta` |
 | Design tokens | ✅ | Existing CSS variables + Tailwind v4 theme |
 
 ## Phase 3 — Core Portfolio
@@ -50,10 +50,10 @@ Legend:
 
 | Item | Status | Notes |
 | --- | --- | --- |
-| Command palette search across entities | 🔶 | Currently searches commands + projects |
-| Global search registry | ⬜ | |
-| Terminal aliases (`work`, `proj`, `exp`, `tech`, `search`) | ⬜ | |
-| Terminal data privacy (remove phone from `contact`) | ⬜ | |
+| Command palette search across entities | ✅ | Routes, projects, technologies, experience, knowledge |
+| Global search registry | ✅ | `registry.ts` |
+| Terminal aliases (`work`, `proj`, `exp`, `tech`, `search`) | ✅ | `COMMAND_ALIASES` |
+| Terminal data privacy (remove phone from `contact`) | ✅ | |
 | Contextual navigation / breadcrumbs | ⬜ | Low priority — flat routes |
 | URL-addressable state | ✅ | `#/work/:id`, `#/lab/:id` work |
 
@@ -61,8 +61,8 @@ Legend:
 
 | Item | Status | Notes |
 | --- | --- | --- |
-| Obsidian publishing model (`public: true`) | ⬜ | Generator currently blacklist-based |
-| Build-time validation | ⬜ | |
+| Obsidian publishing model (`public: true`) | ✅ | Generator + novel.cjs filter |
+| Build-time validation | ✅ | Silent exclusion of non-public notes |
 | Knowledge graph scalability | 🔶 | SVG circular graph, 3 categories / 169 notes |
 
 ## Phase 6 — Architecture
@@ -78,17 +78,17 @@ Legend:
 | --- | --- | --- |
 | Preserve existing dashboard | ✅ | Untouched |
 | Integrations status states | ✅ | Loading/empty/error present |
-| Security audit (functions) | 🔶 | `auth.cjs` brute-force guard planned |
+| Security audit (functions) | ✅ | `auth.cjs` brute-force guard + timing-safe compare |
 
 ## Phase 8 — Polish
 
 | Item | Status | Notes |
 | --- | --- | --- |
 | Accessibility | 🔶 | Manual audit open |
-| Performance | 🔶 | Code splitting planned |
-| SEO | 🔶 | Per-route titles planned |
+| Performance | ✅ | Code splitting + lazy chunks |
+| SEO | ✅ | Per-route titles |
 | Mobile | ✅ | Navbar drawer + palette button |
-| Loading / empty / error states | ✅ | Dashboard sections |
+| Loading / empty / error states | ✅ | Dashboard sections + error boundaries |
 
 ## Phase 9 — Verification
 
@@ -97,4 +97,4 @@ Legend:
 | `npm run lint` | ✅ | |
 | `npm run build` | ✅ | |
 | Test suite | ❌ | No test infra in repo |
-| Final report `docs/portfolio-v2-final-report.md` | ⬜ | |
+| Final report `docs/portfolio-v2-final-report.md` | ✅ | |
