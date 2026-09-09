@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { PasswordGate } from '@/dashboard/components/PasswordGate'
 import { Card, Stat, BarChart, LineChart } from '@/dashboard/components/charts'
 import { Button } from '@/components/ui/button'
+import { dashboardAuthHeaders } from '@/dashboard/lib/auth-token'
 
 interface AmliStats {
   total: number
@@ -28,7 +29,9 @@ export function AmliSection() {
     setError(null)
     try {
       const qs = force ? '?sync=1' : ''
-      const res = await fetch(`/api/amli${qs}`)
+      const res = await fetch(`/api/amli${qs}`, {
+        headers: { ...dashboardAuthHeaders() },
+      })
       const json = await res.json().catch(() => null)
       if (!res.ok || !json || json.error) throw new Error(json?.error || `Error ${res.status}`)
       setData(json)
@@ -41,6 +44,17 @@ export function AmliSection() {
 
   useEffect(() => {
     load()
+  }, [])
+
+  // Re-fetch when the user unlocks the details gate so the protected fields
+  // (top APIs, recent artifacts) load in with the auth token attached.
+  useEffect(() => {
+    const onChange = () => {
+      const token = dashboardAuthHeaders()['X-Dashboard-Auth']
+      if (token) load()
+    }
+    window.addEventListener('dashboard-auth-changed', onChange)
+    return () => window.removeEventListener('dashboard-auth-changed', onChange)
   }, [])
 
   async function syncNow() {

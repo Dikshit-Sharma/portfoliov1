@@ -5,8 +5,9 @@ const ALLOWED_ORIGINS = ['https://dikshitsharma.netlify.app', 'https://portfolio
 
 function getHeaders(event) {
   const origin = (event && event.headers && (event.headers.origin || event.headers.Origin)) || '';
+  const allowOrigin = ALLOWED_ORIGINS.indexOf(origin) !== -1 ? origin : '';
   return {
-    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.indexOf(origin) !== -1 ? origin : ALLOWED_ORIGINS[0],
+    ...(allowOrigin ? { 'Access-Control-Allow-Origin': allowOrigin } : {}),
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Content-Type': 'application/json',
@@ -109,8 +110,8 @@ const handler = async (event) => {
     });
     const user = data.user;
     return ok(event, serialize(user, now));
-  } catch (e) {
-    return err(event, 500, e.message || 'GitHub error');
+  } catch {
+    return err(event, 500, 'GitHub data is temporarily unavailable');
   }
 };
 
@@ -182,7 +183,7 @@ function serializePublic(profile, repos, events) {
     })),
     contributions: { total: Object.values(byDate).reduce((a, b) => a + b, 0), weeks: [], days: [] },
     asOf: new Date().toISOString(),
-    note: 'Unauthenticated mode (no GITHUB_TOKEN) – contribution heatmap unavailable; add a token for the full graph.',
+    note: 'Aggregate public activity shown; detailed contribution calendar unavailable in this mode.',
   };
 }
 

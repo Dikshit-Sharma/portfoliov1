@@ -1,6 +1,7 @@
 import { Lock, Unlock } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { storeDashboardAuthToken, clearDashboardAuthToken } from '@/dashboard/lib/auth-token'
 
 export function PasswordGate({ gate, title, description, children }: {
   gate: string
@@ -36,6 +37,10 @@ async function unlock() {
     }
     if (valid) {
       sessionStorage.setItem(gate, '1')
+      // Store sha256(password) so privileged /api calls can authenticate the
+      // session server-side without the password leaving the browser.
+      storeDashboardAuthToken(password)
+      window.dispatchEvent(new CustomEvent('dashboard-auth-changed'))
       setAuthed(true)
     } else {
       setError('Incorrect password.')
@@ -45,6 +50,8 @@ async function unlock() {
 
   function lock() {
     sessionStorage.removeItem(gate)
+    clearDashboardAuthToken()
+    window.dispatchEvent(new CustomEvent('dashboard-auth-changed'))
     setAuthed(false)
   }
 

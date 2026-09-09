@@ -6,6 +6,7 @@ export type PageRoute =
   | 'lab'
   | 'now'
   | 'knowledge'
+  | 'system'
   | 'recruiter'
   | 'contact'
   | 'experience'
@@ -19,6 +20,7 @@ const PAGE_ROUTES: PageRoute[] = [
   'lab',
   'now',
   'knowledge',
+  'system',
   'recruiter',
   'contact',
   'experience',

@@ -77,10 +77,15 @@ export function CommandProvider({
 
   const commands = useMemo<Command[]>(
     () => [
+      { id: 'ws-work', label: 'Workspace 1: Work', group: 'Workspaces', hint: 'projects', run: () => navigate('work') },
+      { id: 'ws-lab', label: 'Workspace 2: Lab', group: 'Workspaces', hint: 'experiments', run: () => navigate('lab') },
+      { id: 'ws-knowledge', label: 'Workspace 3: Knowledge', group: 'Workspaces', hint: 'notes', run: () => navigate('knowledge') },
+      { id: 'ws-system', label: 'Workspace 4: System', group: 'Workspaces', hint: 'architecture', run: () => navigate('system') },
       { id: 'work', label: 'Go to Work', group: 'Navigate', hint: 'G P', run: () => navigate('work') },
       { id: 'lab', label: 'Go to Lab', group: 'Navigate', hint: 'G L', run: () => navigate('lab') },
       { id: 'experience', label: 'Go to Experience', group: 'Navigate', hint: 'G E', run: () => navigate('experience') },
       { id: 'knowledge', label: 'Go to Knowledge', group: 'Navigate', hint: 'G K', run: () => navigate('knowledge') },
+      { id: 'system', label: 'Go to System', group: 'Navigate', hint: 'G S', run: () => navigate('system') },
       { id: 'now', label: 'Go to Now', group: 'Navigate', hint: 'G N', run: () => navigate('now') },
       { id: 'contact', label: 'Go to Contact', group: 'Navigate', hint: 'G C', run: () => navigate('contact') },
       { id: 'recruiter', label: 'Open Recruiter Mode', group: 'Navigate', hint: 'recruiter', run: () => navigate('recruiter') },
@@ -214,6 +219,7 @@ export function CommandProvider({
           l: () => navigate('lab'),
           n: () => navigate('now'),
           k: () => navigate('knowledge'),
+          s: () => navigate('system'),
           d: () => navigateDashboard('overview'),
           c: () => navigate('contact'),
         }
@@ -448,6 +454,13 @@ export function CommandProvider({
                   <span className="flex gap-1">
                     <Kbd>G</Kbd>
                     <Kbd>K</Kbd>
+                  </span>
+                </li>
+                <li className="flex items-center justify-between gap-4">
+                  <span>System</span>
+                  <span className="flex gap-1">
+                    <Kbd>G</Kbd>
+                    <Kbd>S</Kbd>
                   </span>
                 </li>
                 <li className="flex items-center justify-between gap-4">

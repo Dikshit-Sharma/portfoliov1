@@ -9,6 +9,11 @@ const { getStore } = require('@netlify/blobs');
 
 const STORE = 'obsidian-github';
 const SNAPSHOT_KEY = 'vault-v1';
+// The content cache holds raw note text keyed by (path -> sha/content) so the
+// daily sync can skip re-downloading unchanged blobs. It is stored under a
+// SEPARATE key and is NEVER included in the served snapshot, because the raw
+// text includes private (non-`public: true`) notes that must not leave the server.
+const CACHE_KEY = 'vault-cache-v1';
 const FRESH_MS = 26 * 60 * 60 * 1000; // 26h
 
 const DEFAULT_REPO = process.env.OBSIDIAN_REPO || 'Dikshit-Sharma/novel';
@@ -95,6 +100,26 @@ async function writeSnapshot(snap) {
   } catch { /* best effort */ }
 }
 
+// Content cache (private note text) is kept separate from the public snapshot
+// and is never returned to callers. We serialize it ourselves so the served
+// snapshot object never carries raw vault content.
+async function readCache() {
+  try {
+    const store = getStore(STORE);
+    const cache = await store.getJSON(CACHE_KEY);
+    return cache && typeof cache.files === 'object' ? cache.files : {};
+  } catch {
+    return {};
+  }
+}
+
+async function writeCache(files) {
+  try {
+    const store = getStore(STORE);
+    await store.setJSON(CACHE_KEY, { files });
+  } catch { /* best effort */ }
+}
+
 // Clone-ish util: copyFileTree caches blobs by (path, sha) so unchanged files
 // don't need to be re-downloaded on the daily sync.
 async function resolveTree(repo) {
@@ -121,13 +146,14 @@ async function resolveTree(repo) {
   return { branch, repoInfo, tree: treeData.tree || [] };
 }
 
-async function sync(repo, existing) {
+async function sync(repo) {
   const { branch, repoInfo, tree } = await resolveTree(repo);
-  const previous = existing || { files: {} };
+  // Content dedupe reads the separate, never-served cache of raw note text.
+  const previousCache = await readCache();
 
   // Flatten the tree into md blobs under a category.
   const categoryMap = new Map(); // folder -> { label, color, emoji, notes: [] }
-  const files = {}; // path -> { sha, content }
+  const files = {}; // path -> { sha, content } — cached text, kept server-side only
   const bySha = {}; // sha -> cached content (path-agnostic dedupe)
 
   const mdBlobs = tree.filter((t) => t.type === 'blob' && t.path.endsWith('.md'));
@@ -141,8 +167,8 @@ async function sync(repo, existing) {
     if (IGNORED_TOP.has(folder)) continue;
 
     // Reuse cached content when the blob sha is unchanged.
-    let content = previous.files[t.path] && previous.files[t.path].sha === t.sha
-      ? previous.files[t.path].content
+    let content = previousCache[t.path] && previousCache[t.path].sha === t.sha
+      ? previousCache[t.path].content
       : bySha[t.sha] && bySha[t.sha].sha === t.sha
         ? bySha[t.sha].content
         : null;
@@ -158,6 +184,8 @@ async function sync(repo, existing) {
   }
 
   // Build categories sorted by folder, notes sorted by name for stability.
+  // NOTE: content is derived from `files`, which is only ever persisted to the
+  // server-side cache (writeCache). Private notes never enter the public snapshot.
   for (const t of mdBlobs) {
     const parts = t.path.split('/');
     const folder = parts.length > 1 ? parts[0] : repoInfo.name;
@@ -197,6 +225,10 @@ async function sync(repo, existing) {
     notes: cat.notes,
   }));
 
+  // Persist raw note text to the separate, never-served cache for next-time dedupe.
+  await writeCache(files);
+
+  // The served snapshot contains ONLY public, published data.
   const snapshot = {
     repo,
     branch,
@@ -204,27 +236,37 @@ async function sync(repo, existing) {
     commit: repoInfo.pushed_at || null,
     totalNotes: categories.reduce((s, c) => s + c.notes.length, 0),
     categories,
-    files,
   };
   await writeSnapshot(snapshot);
   return snapshot;
 }
 
 const handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: { 'Content-Type': 'application/json' }, body: '' };
-  const isScheduled = !event.httpMethod || (event.httpMethod === 'POST' && !event.queryStringParameters);
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: { ...corsFor(event) }, body: '' };
+
+  const headers = event.headers || {};
+  const origin = headers.origin || '';
+
+  // Real Netlify scheduled invocations carry a scheduled marker header; a plain
+  // anonymous POST (no marker) must NOT be treated as a privileged scheduled run.
+  const isScheduled =
+    event.httpMethod === 'POST' &&
+    (headers['x-nf-scheduled'] || headers['x-nf-event'] === 'scheduled');
   const force = event.httpMethod === 'GET' && event.queryStringParameters && event.queryStringParameters.sync === '1';
   const repo = DEFAULT_REPO;
 
   // Browser requests must come from an allowlisted origin.
-  if (!isScheduled && event.headers && event.headers.origin && !ALLOWED_ORIGINS.includes(event.headers.origin)) {
+  if (origin && !ALLOWED_ORIGINS.includes(origin)) {
     return err(event, 403, 'Origin not allowed');
   }
 
   try {
-    if (isScheduled || force) {
-      const existing = await readSnapshot().catch(() => null);
-      const snapshot = await sync(repo, existing);
+    // On-demand force-refresh is privileged: allow genuine scheduler runs or
+    // allowlisted-origin requests (the dashboards's own "sync now" action).
+    const authorizedWrite = isScheduled || Boolean(origin);
+
+    if ((isScheduled || force) && authorizedWrite) {
+      const snapshot = await sync(repo);
       return ok(event, { ok: true, sampledAt: snapshot.sampledAt, totalNotes: snapshot.totalNotes });
     }
 
@@ -232,12 +274,12 @@ const handler = async (event) => {
       const cached = await readSnapshot();
       if (cached) return ok(event, { ...cached, fromCache: true });
       // No fresh snapshot: try a live sync so the first visit populates it.
-      const snapshot = await sync(repo, null);
+      const snapshot = await sync(repo);
       return ok(event, snapshot);
     }
     return err(event, 405, 'Method not allowed');
-  } catch (e) {
-    return err(event, e.code === 'NO_TOKEN' || e.code === 'REPO_NOT_FOUND' ? 424 : 500, e.message);
+  } catch {
+    return err(event, 500, 'Sync failed');
   }
 };
 

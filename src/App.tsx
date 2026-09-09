@@ -1,7 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { CommandProvider } from '@/components/CommandPalette'
-import { Footer } from '@/components/Footer'
-import { Navbar } from '@/components/Navbar'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { WorkPage, ProjectDetailPage } from '@/components/WorkPage'
 import { LabPage, LabDetailPage } from '@/components/LabPage'
@@ -10,6 +8,7 @@ import { RecruiterPage } from '@/components/RecruiterPage'
 import { ContactPage } from '@/components/ContactPage'
 import { ChangelogPage } from '@/components/ChangelogPage'
 import { NotFoundPage } from '@/components/NotFoundPage'
+import { SystemPage } from '@/components/SystemPage'
 import { About } from '@/components/About'
 import { AmliToolsDetail } from '@/components/AmliToolsDetail'
 import { Education } from '@/components/Education'
@@ -17,9 +16,11 @@ import { Experience } from '@/components/Experience'
 import { Hero } from '@/components/Hero'
 import { ProjectsSection } from '@/components/ProjectsSection'
 import { ImpactSection } from '@/components/ImpactSection'
-import { ScrollProgress } from '@/components/ScrollProgress'
 import { Skills } from '@/components/Skills'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { TopBar } from '@/components/workspace/TopBar'
+import { StatusBar } from '@/components/workspace/StatusBar'
+import { WorkspaceShell } from '@/components/workspace/WorkspaceShell'
 import { usePageMeta } from '@/lib/seo'
 import { useHashRoute, isDashboardRoute } from '@/lib/router'
 
@@ -87,6 +88,12 @@ export default function App() {
             </Suspense>
           </ErrorBoundary>
         )
+      case 'system':
+        return (
+          <ErrorBoundary label="system">
+            <SystemPage />
+          </ErrorBoundary>
+        )
       case 'now':
         return <NowPage />
       case 'recruiter':
@@ -117,19 +124,18 @@ export default function App() {
   return (
     <ThemeProvider>
       <CommandProvider onOpenAmli={() => setAmliOpen(true)}>
-        <a
-          href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded-md focus:bg-indigo-500 focus:px-3 focus:py-2 focus:text-white"
-        >
-          Skip to content
-        </a>
-        <ScrollProgress />
-        <Navbar />
-        <main id="main">
-          {renderPage()}
-        </main>
-        <Footer />
-        <AmliToolsDetail open={amliOpen} onClose={() => setAmliOpen(false)} />
+        <WorkspaceShell>
+          <a
+            href="#main"
+            className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded-md focus:bg-indigo-500 focus:px-3 focus:py-2 focus:text-white"
+          >
+            Skip to content
+          </a>
+          <TopBar route={route} />
+          <main id="main">{renderPage()}</main>
+          <StatusBar route={route} />
+          <AmliToolsDetail open={amliOpen} onClose={() => setAmliOpen(false)} />
+        </WorkspaceShell>
       </CommandProvider>
     </ThemeProvider>
   )

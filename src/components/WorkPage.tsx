@@ -1,6 +1,7 @@
 import { SectionHeading } from '@/components/SectionHeading'
 import { projects, getFeaturedProjects, getProjectsByCategory, type Project } from '@/data/projects'
 import { ProjectCard } from '@/components/ProjectCard'
+import { TechBadge } from '@/components/workspace/TechBadge'
 import { Reveal } from '@/hooks/useReveal'
 import { ArrowUpRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -95,7 +96,7 @@ export function WorkPage() {
             <ul className="flex flex-wrap gap-2">
               {project.technologies.map((tag) => (
                 <li key={tag}>
-                  <Badge className="opacity-80 group-hover:opacity-100 group-hover:border-indigo-400/50">{tag}</Badge>
+                  <TechBadge tech={tag} className="opacity-80 group-hover:opacity-100 group-hover:border-indigo-400/50" />
                 </li>
               ))}
             </ul>
@@ -313,7 +314,7 @@ export function ProjectDetailPage({ projectId }: { projectId: string }) {
                 <ul className="mt-4 flex flex-wrap gap-2">
                   {project.technologies.map((tag) => (
                     <li key={tag}>
-                      <Badge className="group-hover:border-indigo-400/50 group-hover:text-[var(--color-fg)]">{tag}</Badge>
+                      <TechBadge tech={tag} className="group-hover:border-indigo-400/50 group-hover:text-[var(--color-fg)]" />
                     </li>
                   ))}
                 </ul>

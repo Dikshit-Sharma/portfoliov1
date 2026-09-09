@@ -44,6 +44,7 @@ const routes: RawEntity[] = [
   { id: 'route-lab', type: 'route', label: 'Lab', description: 'Experiments and personal engineering', aliases: ['experiments', 'experimental'], path: '#/lab' },
   { id: 'route-experience', type: 'route', label: 'Experience', description: 'Engineering timeline and roles', aliases: ['career', 'jobs', 'work history'], path: '#/experience' },
   { id: 'route-knowledge', type: 'route', label: 'Knowledge', description: 'Obsidian knowledge graph and notes', aliases: ['obsidian', 'notes', 'vault'], path: '#/knowledge' },
+  { id: 'route-system', type: 'route', label: 'System', description: 'Architecture, integrations, changelog, details about this workspace', aliases: ['architecture', 'system', 'about', 'status'], path: '#/system' },
   { id: 'route-now', type: 'route', label: 'Now', description: 'What I am currently building and learning', aliases: ['current', 'focus'], path: '#/now' },
   { id: 'route-recruiter', type: 'route', label: 'Recruiter Mode', description: '30-second reading: role, stack, impact', aliases: ['recruiter', 'hiring', 'resume'], path: '#/recruiter' },
   { id: 'route-contact', type: 'route', label: 'Contact', description: 'Email, location, ways to reach me', aliases: ['email', 'reach'], path: '#/contact' },
@@ -176,5 +177,5 @@ export function getRegistry(): SearchEntity[] {
 
 /** Routes that exist for cross-checking (data validation). */
 export const validRoutes: ReadonlySet<PageRoute> = new Set<PageRoute>([
-  'home', 'work', 'lab', 'now', 'knowledge', 'recruiter', 'contact', 'experience', 'changelog', 'dashboard', '404',
+  'home', 'work', 'lab', 'now', 'knowledge', 'system', 'recruiter', 'contact', 'experience', 'changelog', 'dashboard', '404',
 ])

@@ -31,6 +31,10 @@ const META: Partial<Record<PageRoute, { title: string; description: string }>> =
     title: `Knowledge — ${site.fullName}`,
     description: 'Obsidian knowledge graph and notes index.',
   },
+  system: {
+    title: `System — ${site.fullName}`,
+    description: 'Workspace architecture, integrations, changelog and system status.',
+  },
   recruiter: {
     title: `${site.fullName} — Recruiter Summary`,
     description: 'Quick 60-second overview: role, stack, experience and impact.',

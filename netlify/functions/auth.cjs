@@ -14,8 +14,11 @@ const attempts = new Map(); // clientKey -> { count, windowStart }
 
 function getHeaders(event) {
   const origin = (event && event.headers && (event.headers.origin || event.headers.Origin)) || '';
+  const allowOrigin = ALLOWED_ORIGINS.indexOf(origin) !== -1 ? origin : '';
   return {
-    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.indexOf(origin) !== -1 ? origin : ALLOWED_ORIGINS[0],
+    // Only set ACAO for allowlisted origins; omit it otherwise so browsers
+    // block the read without leaking allowlist state.
+    ...(allowOrigin ? { 'Access-Control-Allow-Origin': allowOrigin } : {}),
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json',
@@ -31,8 +34,21 @@ function err(event, status, msg) {
 
 function clientKey(event) {
   const headers = (event && event.headers) || {};
-  const forwarded = headers['x-forwarded-for'] || headers['x-nf-client-connection-ip'] || '';
-  return forwarded.split(',')[0].trim() || (event.rawUrl || 'anonymous');
+  // Prefer the non-spoofable Netlify connection IP. The last hop of
+  // x-forwarded-for is appended by the edge (real client IP); the first element
+  // is attacker-controllable, so we must not trust it.
+  const nfIp = headers['x-nf-client-connection-ip'] || '';
+  if (nfIp) return `ip:${nfIp}`;
+  const forwarded = headers['x-forwarded-for'] || '';
+  if (forwarded) {
+    const parts = forwarded.split(',').map((s) => s.trim()).filter(Boolean);
+    const last = parts[parts.length - 1];
+    if (last) return `ip:${last}`;
+  }
+  // No forwarding headers: group by a hash of the URL path only so that
+  // header-less clients still share a rate-limit bucket without a global
+  // single-point lockout across unrelated requests.
+  return `url:${(event.path || event.rawUrl || 'unknown').split('?')[0]}`;
 }
 
 function isBlocked(key) {
@@ -71,7 +87,7 @@ const handler = async (event) => {
   if (bodySize > MAX_BODY_BYTES) return err(event, 413, 'Payload too large');
 
   const password = process.env.DASHBOARD_PASSWORD || '';
-  if (!password) return err(event, 500, 'Password not configured');
+  if (!password) return err(event, 500, 'Authentication is not configured');
 
   const key = clientKey(event);
   if (isBlocked(key)) return err(event, 429, 'Too many attempts. Try again later.');
