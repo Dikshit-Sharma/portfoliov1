@@ -36,7 +36,7 @@ type CommandContextValue = {
   openTerminal: () => void
 }
 
-const CommandContext = createContext<CommandContextValue | null>(null)
+export const CommandContext = createContext<CommandContextValue | null>(null)
 
 export function useCommand() {
   const ctx = useContext(CommandContext)

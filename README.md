@@ -5,6 +5,25 @@
 
 [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/Dikshit-Sharma/portfoliov1)
 
+## What Is This?
+
+**Dikshit OS** is a browser-based personal desktop environment. It boots into a workspace
+with a tiling window manager, application dock, global launcher, and system shell — not a
+traditional website. The portfolio content lives inside applications; the environment is
+the product.
+
+```text
+Browser (React 19 SPA)
+    │
+    ├── DesktopEnvironment (wallpaper, top bar, dock, launcher, notifications)
+    │   ├── WorkspaceManager (Hyprland-style tiling per workspace)
+    │   │   ├── WindowChrome (focus, minimize, maximize, close)
+    │   │   └── AppComponents (lazy-loaded applications)
+    │   └── Overlays (launcher, quick settings, notifications)
+    │
+    └── Dashboard (private, separate route, password-gated)
+```
+
 ## Workspaces
 
 | Workspace | Key | Route | Focus |
@@ -37,29 +56,58 @@ Open the dev server (default `http://localhost:5173`).
 
 | Key | Action |
 |-----|--------|
-| `Ctrl+K` / `⌘K` | Command palette (fuzzy search: projects, tech, pages, commands) |
+| `Ctrl+K` / `⌘K` | Open launcher (fuzzy search: apps, projects, tech, pages, commands) |
 | `T` | Open terminal |
 | `?` | Shortcuts help |
-| `G` then `P/E/L/N/K/S/D/C` | Navigate to Workspace / Page |
+| `G` then `P/E/L/N/K/S/D/C` | Navigate to Workspace / Page (vim-style leader) |
 | `R` | Download resume |
 | `Super+1..4` | Switch workspace (desktop) |
+| `Super+Space` | Open launcher |
+| `Super+Enter` | Open terminal |
+| `Esc` | Close overlay / dialog |
+
+Every shortcut has a visible clickable alternative.
 
 ## Architecture
 
 ```text
-Browser (React 19 SPA)
+Browser (React 19 SPA, hash routing)
     │
     ▼
 Netlify Edge (static assets + SPA redirects)
     │
-    ├── /api/auth      → password verification (rate-limited, timing-safe)
+    ├── /api/auth      → password verification (rate-limited, timing-safe, non-spoofable IP)
     ├── /api/github    → GitHub profile/repos/contributions (GraphQL with token, REST fallback)
     ├── /api/amli      → AMLI stats (cached, auth-gated details)
     ├── /api/amli-sync → scheduled daily refresh (05:30 UTC)
     └── /api/novel     → Obsidian vault sync (public: true only)
 ```
 
-## Data Model
+### Desktop Environment Layer (`src/desktop/`)
+
+```
+src/desktop/
+├── DesktopEnvironment.tsx       # Root composition
+├── DesktopContext.tsx           # Central state (workspaces, windows, overlays)
+├── DesktopBackground.tsx        # True wallpaper layer
+├── Window.tsx                   # Window chrome + focus
+├── WorkspaceManager.tsx         # Tiling layout (1=full, 2=split, 3=master+stack, 4=grid)
+├── ApplicationRegistry.tsx      # First-class apps (id, name, icon, defaultWorkspace, component)
+├── Registry.ts                  # Unified search: apps + commands + entities
+├── SystemTopBar.tsx             # Waybar-style (identity, workspaces, tray, clock)
+├── WorkspaceSwitcher.tsx        # Top-bar workspace tabs
+├── Dock.tsx                     # Running apps + launcher + notifications
+├── Launcher.tsx                 # Global fuzzy search overlay
+├── QuickSettings.tsx            # Theme, integration states, shortcuts
+├── NotificationCenter.tsx       # Real-event notifications only
+├── RecruiterDesktop.tsx         # Focused professional preset
+├── apps/                        # 13 lazy-loaded applications
+├── desktop.types.ts             # Shared type definitions
+├── keyboard.ts                  # Browser-safe shortcut system
+└── responsive.ts                # Mobile composition (stack on <768px)
+```
+
+### Data Model
 
 - **Projects** (`src/data/projects.ts`) — case studies with deep dives
 - **Experience** (`src/data/experience.ts`) — roles, bullets, stack
@@ -71,7 +119,7 @@ Netlify Edge (static assets + SPA redirects)
 
 ### Relationship Engine
 
-All entities are cross-linked (project ↔ technology ↔ experience ↔ impact ↔ knowledge). The `registry` powers the command palette and terminal search; `inspectEntity()` surfaces connections in the Entity Inspector (right panel).
+All entities are cross-linked (project ↔ technology ↔ experience ↔ impact ↔ knowledge). The unified `Registry` powers the launcher and terminal search; `inspectEntity()` surfaces connections in the Entity Inspector (right panel).
 
 ## Obsidian Publishing
 
@@ -112,6 +160,13 @@ Scans `~/Entertainment/Obsidian/Void` (excludes `AMLI_Vault`, `.obsidian`, `.git
 ## CI
 
 GitHub Actions (`.github/workflows/ci.yml`): `npm ci → lint → build` on every push/PR.
+
+## Performance
+
+- **Main bundle:** 284 KB (87 KB gzip) — heavy apps lazy-loaded (Knowledge, Terminal, Dashboard, Architecture)
+- **No unnecessary dependencies** — React, TypeScript, Tailwind v4, lucide-react, clsx/tailwind-merge/CVA only
+- **Client-side encryption** for journal uses Web Crypto API (no bundle cost)
+- **Reduced motion** respected globally
 
 ## Design Principles
 

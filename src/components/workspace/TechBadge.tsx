@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge'
-import { useWorkspaceShell } from '@/components/workspace/WorkspaceShell'
+import { useWorkspaceShell } from '@/desktop/WorkspaceShellBridge'
 import type { ReactNode } from 'react'
 
 /**

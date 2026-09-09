@@ -34,7 +34,7 @@ const COMMAND_ALIASES: Record<string, string> = {
   info: 'inspect',
 }
 
-export function Terminal({ onClose }: { onClose: () => void }) {
+export function Terminal({ onClose, embedded = false }: { onClose: () => void; embedded?: boolean }) {
   const { modKey } = useCommand()
   const [output, setOutput] = useState<TerminalOutput>({
     lines: [
@@ -526,7 +526,11 @@ export function Terminal({ onClose }: { onClose: () => void }) {
   return (
     <div
       ref={terminalRef}
-      className="fixed bottom-0 left-0 right-0 z-50 max-h-[70vh] border-t border-[var(--color-border)] bg-[var(--color-bg-elevated)] shadow-[0_-20px_50px_-20px_rgba(0,0,0,0.8)]"
+      className={
+        embedded
+          ? 'flex h-full flex-col bg-[var(--color-bg-elevated)]'
+          : 'fixed bottom-0 left-0 right-0 z-50 max-h-[70vh] border-t border-[var(--color-border)] bg-[var(--color-bg-elevated)] shadow-[0_-20px_50px_-20px_rgba(0,0,0,0.8)]'
+      }
       role="dialog"
       aria-label="Terminal"
     >
@@ -544,7 +548,7 @@ export function Terminal({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      <div className="h-[calc(70vh_-_48px)] overflow-y-auto p-4 font-mono text-sm">
+      <div className={embedded ? 'min-h-0 flex-1 overflow-y-auto p-4 font-mono text-sm' : 'h-[calc(70vh_-_48px)] overflow-y-auto p-4 font-mono text-sm'}>
         {output.lines.map((line, i) => (
           <div key={i} className="mb-1">{renderOutput(line)}</div>
         ))}

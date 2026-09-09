@@ -13,6 +13,29 @@
   --color-border: rgb(255 255 255 / 0.08);
   --color-accent: #818cf8;
   --color-accent-2: #a78bfa;
+
+  /* Desktop environment metrics */
+  --bar-height: 2.5rem;      /* 40px global top bar */
+  --dock-height: 3.25rem;    /* 52px dock */
+  --window-gap: 0.5rem;      /* gaps between tiled windows */
+  --window-radius: 0.625rem; /* 10px window chrome */
+  --focus-ring: 2px;
+  --blur: 12px;
+  --shadow: 0 16px 48px -24px rgb(0 0 0 / 0.6);
+}
+
+/* OS design tokens (runtime-derived surfaces) */
+:root {
+  --desktop-bg: var(--color-bg);
+  --surface: var(--color-bg-elevated);
+  --surface-hover: color-mix(in srgb, var(--color-fg) 5%, transparent);
+  --surface-active: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  --border: var(--color-border);
+  --border-active: color-mix(in srgb, var(--color-accent) 45%, transparent);
+  --accent: var(--color-accent);
+  --accent-muted: color-mix(in srgb, var(--color-accent) 60%, transparent);
+  --text: var(--color-fg);
+  --text-muted: var(--color-fg-muted);
 }
 
 html {
